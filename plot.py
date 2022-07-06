@@ -1,81 +1,123 @@
 # This Python file uses the following encoding: utf-8
+import numpy as np
+
 from operation_model import Microplastic
 from operation_model import Kinetics
 from operation_model import Isotherm
-from data_treatment import Plastic, KineticsData
+from data_treatment import Plastic, KineticsData, IsothermData
+from data_treatment import Adsorption
 
-# MPs/NPs
-path = ["./carboxyl/1.csv", "./carboxyl/2.csv", "./carboxyl/5.csv", "./carboxyl/10.csv",
-                "./carboxyl/20.csv", "./carboxyl/40.csv", "./carboxyl/50.csv"]
-c_num = 8
-c = [1, 2, 5, 10, 20, 40, 50]
-c_label = ["1mg/L", "2mg/L", "5mg/L", "10mg/L", "20mg/L", "40mg/L", "50mg/L"]
+grade = "M_1/2st"
 type = "carboxyl"
-excitation_wave_length = 518
-x_limit = [0, 52]
-y_limit = [0, 40]
-s1 = r"./Fluorescence intensity - wavelength normal distribution curve.png"
-s2 = r"./Fluorescence intensity - concentration fitting straight line diagram.png"
+# MPs/NPs
+c = [5, 10, 25, 50, 80, 85, 90, 100, 120, 150]
+c_num = 11
+excitation_wave_length = 526
+x_limit = [0, 152]
+y_limit = [0, 140]
+# data_save_path = "M_1\\2st\\PSNPs\\20220702"
+data_save_path = None
+# s1 = "".join([type, "_png/", grade,"/荧光强度-波长正态分布曲线图.png"])
+# s2 = "".join([type, "_png/", grade,"/荧光强度-浓度拟合直线图.png"])
+s1 = None
+s2 = None
+path = []
+c_label = []
+for ind, val in enumerate(c):
+    path.append("".join([type, "/", str(val), ".csv"]))
+for i in c:
+    c_label.append("".join([str(i), "mg/L"]))
+a1 = 0
+b1 = 0
 """
 ------------------------------------------------------------------------------------------------------------------------
 """
-data_a = Plastic.plastic_data(path)
-# 8 is 1 more than the number of points (bars) plotted, the fluorescence intensity-wavelength normal distribution curve.
-Microplastic.plot_fic_sc(data_a, c_num, type, "Chinese", c_label, y_limit, save=s1)
-# 8 is 1 more than the number of points (bars) plotted, fluorescence intensity-concentration fitting straight line graph, return slope A and intercept B.
-a1, b1 = Microplastic.plot_fic_lc(data_a, excitation_wave_length, c_num, c, type, "Chinese", x_limit, y_limit, s2)
-
+try:
+    # 导入浓度梯度下的微纳塑料母液荧光强度数据, 并完成差分矩阵运算处理
+    data_a = Plastic.plastic_data(type, data_save_path, path)
+    # 8要比绘制的点(条)数多1, 荧光强度-波长正态分布曲线图
+    Microplastic.plot_fic_sc(data_a, c_num, type, "English", c_label, y_limit, s1)
+    # 8要比绘制的点(条)数多1, 荧光强度-浓度拟合直线图，返回斜率a和截距b
+    a1, b1 = Microplastic.plot_fic_lc(data_a, excitation_wave_length, c_num, c, type, "English", x_limit, y_limit, s2)
+except Exception as result:
+    print("请检查纳米塑料数据！%s" % result)
 """
 ************************************************************************************************************************
 ************************************************************************************************************************
 """
-
-# Kinetics
+# 动力学(Kinetics)
 t = [0, 10, 20, 30, 45, 60, 90, 120, 180, 240]
-qt = ["./carboxyl_adsorption/0min.csv", "./carboxyl_adsorption/10min.csv",
-     "./carboxyl_adsorption/20min.csv", "./carboxyl_adsorption/30min.csv",
-     "./carboxyl_adsorption/45min.csv", "./carboxyl_adsorption/60min.csv",
-     "./carboxyl_adsorption/90min.csv", "./carboxyl_adsorption/120min.csv",
-     "./carboxyl_adsorption/180min.csv", "./carboxyl_adsorption/240min.csv"]
+t_ipd = np.around(np.sqrt(t), 1)
 mass = 0.036
 init_volume = 0.1
 sample = 0.003
-c_qe = 23
-k_x_limit = [0, 250]
+concentration = "50"
+c_qe = 23  # 每种浓度下的饱和吸附量
+# 一/二阶模型的x和y坐标定义域
+k_x_limit = [0, t[len(t) - 1] + 10]
 f_y_limit = [-0.5, 2.5]
 s_y_limit = [0, 15]
-s3 = r"./1.png"
-s4 = r"./2.png"
+# 粒子内扩散的x和y坐标定义域
+i_x_limit = [0, t_ipd[len(t_ipd) - 1] + 2]
+i_y_limit = [0, 15]
+# data_save_path = "M_1\\2st\\adsorption\\20220702"
+data_save_path = None
+# s3 = "".join([type, "_png/", grade,"/吸附动力学一阶模型.png"])
+# s4 = "".join([type, "_png/", grade,"/吸附动力学二阶模型.png"])
+# s5 = "".join([type, "_png/", grade,"/吸附动力学粒子内扩散模型.png"])
+s3 = None
+s4 = None
+s5 = None
+qt = []
+for i in t:
+    qt.append("".join([type, "_adsorption/%s_" % concentration, str(i), ".csv"]))
 """
 ------------------------------------------------------------------------------------------------------------------------
 """
-# y1
-f = KineticsData.kinetics_pfo_y(qt, excitation_wave_length, a1, b1, mass, init_volume, sample, c_qe)
-# y2
-s = KineticsData.kinetics_pso_y(qt, excitation_wave_length, a1, b1, mass, init_volume, sample, t)
-Kinetics.kinetics_pfo(t[1:], f, type, 1, "Chinese", k_x_limit, f_y_limit, s3)
-Kinetics.kinetics_pso(t[1:], s, type, 2, "Chinese", k_x_limit, s_y_limit, s4)
-
+try:
+    # 一阶方程的y值
+    f = KineticsData.kinetics_pfo_y(qt, excitation_wave_length, a1, b1, mass, init_volume, sample, c_qe, type, concentration, data_save_path)
+    # 二阶方程的y值
+    s = KineticsData.kinetics_pso_y(qt, excitation_wave_length, a1, b1, mass, init_volume, sample, t, type, concentration, data_save_path)
+    # 粒子内扩散的y值
+    ipd = Adsorption.adsorption_quantity(qt, excitation_wave_length, a1, b1, mass, init_volume, sample, type, concentration, data_save_path)
+    # 开始绘制动力学一阶拟合直线
+    Kinetics.kinetics_pfo(t[1:], f, type, 1, "English", k_x_limit, f_y_limit, s3)
+    # 开始绘制动力学二阶拟合直线
+    Kinetics.kinetics_pso(t[1:], s, type, 2, "English", k_x_limit, s_y_limit, s4)
+    # 开始绘制动力学粒子内扩散拟合直线
+    Kinetics.kinetics_ipd(t_ipd[1:], ipd[1:], type, "English", i_x_limit, i_y_limit, s5)
+except Exception as result:
+    print("请检查data_treatment中是否形参都对应或是否开始吸附实验")
 """
 ************************************************************************************************************************
 ************************************************************************************************************************
 """
-
-# isotherm
-ce = [49.85, 78.32, 101.45, 125.63, 149.88]
-qe = [59.78, 95.43, 143.28, 160.22, 180.01]
-K_Langmuir_predict = 0.01
-qm = 60
-K_Freundlich_predict = 20
-n = 0.3
-i_x_limit = [40, 160]
-i_y_limit = [50, 200]
-s5 = r"./Langmuir.png"
-s6 = r"./Freundlich.png"
-"""
-------------------------------------------------------------------------------------------------------------------------
-"""
-# Langmuir
-Isotherm.isotherm_l(ce, qe, qm, K_Langmuir_predict, type, "Chinese", i_x_limit, i_y_limit, s5)
-# Freundlich
-Isotherm.isotherm_f(ce, qe, n, K_Freundlich_predict, type, "Chinese", i_x_limit, i_y_limit, s6)
+# 等温线(isotherm)
+try:
+    # data_save_path = "M_1\\2st\\adsorption\\20220702"
+    data_save_path = None
+    path = []
+    for i in range(len(c)):
+        qt = []
+        for j in t:
+            qt.append("".join([type, "_adsorption/%d_" % c[i], str(j), ".csv"]))
+        path.append(qt)
+    ce = [49.85, 67.98]
+    qe = IsothermData.isotherm_l_y(path, excitation_wave_length, a1, b1, mass, init_volume, sample, type, data_save_path)
+    K_Langmuir_predict = 0.01
+    qm = 60
+    K_Freundlich_predict = 20
+    n = 0.3
+    i_x_limit = [40, 160]
+    i_y_limit = [50, 200]
+    # s5 = "".join([type, "_png/", grade,"/Langmuir模型.png"])
+    # s6 = "".join([type, "_png/", grade,"/Freundlich模型.png"])
+    s5 = None
+    s6 = None
+    # Langmuir曲线绘制
+    Isotherm.isotherm_l(ce, qe, qm, K_Langmuir_predict, type, "English", i_x_limit, i_y_limit, s5)
+    # Freundlich曲线绘制
+    Isotherm.isotherm_f(ce, qe, n, K_Freundlich_predict, type, "English", i_x_limit, i_y_limit, s6)
+except Exception as result:
+    print("未知错误 %s" % result)
