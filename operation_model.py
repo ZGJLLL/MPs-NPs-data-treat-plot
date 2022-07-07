@@ -463,7 +463,12 @@ class Isotherm(object):
         "Chinese": "CNF-AG去除PSNPs(+)的Langmuir拟合数据曲线"}
     title_amino_f = {"English": "Experimental data and calculated Freundlich curves of CNF-AG for PSNPs(+) removal",
         "Chinese": "CNF-AG去除PSNPs(+)的Freundlich拟合数据曲线"}
-    title_list = [title_carboxyl_l, title_amino_l, title_carboxyl_f, title_amino_f]
+    title_null_l = {"English": "Experimental data and calculated Langmuir curves of CNF-AG for PSNPs removal",
+        "Chinese": "CNF-AG去除PSNPs的Langmuir拟合数据曲线"}
+    title_null_f = {"English": "Experimental data and calculated Freundlich curves of CNF-AG for PSNPs removal",
+        "Chinese": "CNF-AG去除PSNPs的Freundlich拟合数据曲线"}
+    title_list = [title_carboxyl_l, title_amino_l, title_null_l,
+                  title_carboxyl_f, title_amino_f, title_null_f]
     x_label_lf = ["C$_{e}$(mg/L)"]
     y_label_lf = ["q$_{e}$(mg/g)"]
 
@@ -487,7 +492,9 @@ class Isotherm(object):
 
             r2_score2_str = "R$^{2}$ = %.4f" % (R_square)
 
-            if kind == "amino":
+            if kind == "null":
+                plt.title(cls.title_list[2][key], fontdict={"family": "Microsoft YaHei", "size": 22})
+            elif kind == "amino":
                 plt.title(cls.title_list[1][key], fontdict={"family": "Microsoft YaHei", "size": 22})
             elif kind == "carboxyl":
                 plt.title(cls.title_list[0][key], fontdict={"family": "Microsoft YaHei", "size": 22})
@@ -546,10 +553,12 @@ class Isotherm(object):
 
             r2_score2_str = "R$^{2}$ = %.4f" % (R_square)
 
+            if kind == "null":
+                plt.title(cls.title_list[5][key], fontdict={"family": "Microsoft YaHei", "size": 22})
             if kind == "amino":
-                plt.title(cls.title_list[3][key], fontdict={"family": "Microsoft YaHei", "size": 22})
+                plt.title(cls.title_list[4][key], fontdict={"family": "Microsoft YaHei", "size": 22})
             elif kind == "carboxyl":
-                plt.title(cls.title_list[2][key], fontdict={"family": "Microsoft YaHei", "size": 22})
+                plt.title(cls.title_list[3][key], fontdict={"family": "Microsoft YaHei", "size": 22})
             else:
                 print("请输入正确信息！")
                 return
