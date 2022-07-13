@@ -63,7 +63,7 @@ class Plastic(object):
 """
 class Adsorption(object):
     @classmethod
-    def concentration(cls, path, excitation_wave_length, a, b):
+    def concentration(cls, concentration, path, excitation_wave_length, a, b):
         """
         :description: 某一浓度的微纳塑料溶液在时间梯度下的吸附实验的浓度变化数据运算
         :param path: 将从荧光仪取得的数据文件(.csv)路径进行按顺序存储进列表path传入
@@ -87,7 +87,7 @@ class Adsorption(object):
                 for i in range(len(path)):
                     y.append(data.iloc[val_index, i + 1])
                 break
-        cnc = []
+        cnc = [concentration]
         # 利用拟合直线y=ax+b算出时间梯度中微纳塑料的每种浓度，并存入cnc列表
         for round in y:
             cnc.append((round - b) / a)
@@ -95,7 +95,7 @@ class Adsorption(object):
 
 
     @classmethod
-    def adsorption_quantity(cls, path, excitation_wave_length, a, b, mass, init_volume, sample, kind=None, concentration=None, save=None):
+    def adsorption_quantity(cls, init_concentration, path, excitation_wave_length, a, b, mass, init_volume, sample, kind=None, concentration=None, save=None):
         """
         :description: 从0时刻开始计算时间梯度下吸附量的变化数据
         :param path: 将从荧光仪取得的数据文件(.csv)路径进行按顺序存储进列表path传入
@@ -109,7 +109,7 @@ class Adsorption(object):
         """
 
         # 得到锥形瓶中每时刻的微纳塑料溶液浓度
-        cnc = cls.concentration(path, excitation_wave_length, a, b)
+        cnc = cls.concentration(init_concentration, path, excitation_wave_length, a, b)
 
         # 0时刻锥形瓶中微纳塑料的总质量
         amount = init_volume * cnc[0]
@@ -146,9 +146,9 @@ class Adsorption(object):
 """
 class KineticsData(object):
     @classmethod
-    def kinetics_pfo_y(cls, path, excitation_wave_length, a, b, mass, init_volume, sample, qe, kind=None, concentration=None, save=None):
+    def kinetics_pfo_y(cls, init_concentration, path, excitation_wave_length, a, b, mass, init_volume, sample, qe, kind=None, concentration=None, save=None):
         # 利用时间梯度下的吸附量计算动力学一阶方程拟合直线需要的y值
-        qt = Adsorption.adsorption_quantity(path, excitation_wave_length, a, b, mass, init_volume, sample, kind, concentration, save)
+        qt = Adsorption.adsorption_quantity(init_concentration, path, excitation_wave_length, a, b, mass, init_volume, sample, kind, concentration, save)
         y = []
         e = math.e
         for i in range(len(qt)):
@@ -164,9 +164,9 @@ class KineticsData(object):
         return y
 
     @classmethod
-    def kinetics_pso_y(cls, path, excitation_wave_length, a, b, mass, init_volume, sample, t, kind=None, concentration=None, save=None):
+    def kinetics_pso_y(cls, init_concentration, path, excitation_wave_length, a, b, mass, init_volume, sample, t, kind=None, concentration=None, save=None):
         # 利用时间梯度下的吸附量计算动力学二阶方程拟合直线需要的y值
-        qt = Adsorption.adsorption_quantity(path, excitation_wave_length, a, b, mass, init_volume, sample, kind, concentration, save)
+        qt = Adsorption.adsorption_quantity(init_concentration, path, excitation_wave_length, a, b, mass, init_volume, sample, kind, concentration, save)
         y = []
         e = math.e
         for i in range(len(qt)):
@@ -207,5 +207,16 @@ class IsothermData(object):
 
 
 if __name__ == "__main__":
-    pass
+    t = [5, 10, 15, 20, 30, 40, 50, 70, 90]
+    concentration = "70"
+    qt = []
+    for i in t:
+        qt.append("".join(["amino", "_adsorption/%s-" % concentration, str(i), ".csv"]))
+    t_ipd = np.around(np.sqrt(t), 1)
+    mass = 0.02
+    init_volume = 0.1
+    sample = 0.004
+    excitation_wave_length = 526
+    ipd = Adsorption.adsorption_quantity(70, qt, excitation_wave_length, 6616.0355, 40394.1147, mass, init_volume, sample, "amino", concentration)
+    print(ipd)
 
